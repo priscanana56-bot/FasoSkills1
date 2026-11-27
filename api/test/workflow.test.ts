@@ -21,6 +21,8 @@ let requestId: string;
 let quoteId: string;
 let quote2Id: string;
 let conversationId: string;
+let acceptedArtisan: typeof plumber | null = null;
+let losingArtisan: typeof plumber | null = null;
 
 async function register(body: Record<string, unknown>) {
   const res = await request(app).post('/api/auth/register').send({ password: 'Password123!', ...body });
@@ -183,23 +185,32 @@ describe('Client / artisan workflow', () => {
     });
 
     it('accepting a quote notifies the winner and the other artisans, and creates a mission', async () => {
-      const res = await request(app).post(`/api/quotes/${quoteId}/accept`).set(auth(client.token));
-      expect(res.status).toBe(200);
+      const [first, second] = await Promise.all([
+        request(app).post(`/api/quotes/${quoteId}/accept`).set(auth(client.token)),
+        request(app).post(`/api/quotes/${quote2Id}/accept`).set(auth(client.token)),
+      ]);
+      expect([first.status, second.status].sort()).toEqual([200, 409]);
+      const winnerQuoteId = first.status === 200 ? quoteId : quote2Id;
+      const loserQuoteId = winnerQuoteId === quoteId ? quote2Id : quoteId;
+      const winnerProfile = winnerQuoteId === quoteId ? plumber : plumber2;
+      const loserProfile = winnerQuoteId === quoteId ? plumber2 : plumber;
+      acceptedArtisan = winnerProfile;
+      losingArtisan = loserProfile;
 
-      const winner = await request(app).get('/api/notifications').set(auth(plumber.token));
-      expect(winner.body.data.some((n: any) => n.type === 'quote:accepted')).toBe(true);
-      const loser = await request(app).get('/api/notifications').set(auth(plumber2.token));
-      expect(loser.body.data.some((n: any) => n.type === 'quote:rejected')).toBe(true);
+      const winnerNotifications = await request(app).get('/api/notifications').set(auth(winnerProfile.token));
+      expect(winnerNotifications.body.data.some((n: any) => n.type === 'quote:accepted')).toBe(true);
+      const loserNotifications = await request(app).get('/api/notifications').set(auth(loserProfile.token));
+      expect(loserNotifications.body.data.some((n: any) => n.type === 'quote:rejected')).toBe(true);
 
-      const missions = await request(app).get('/api/requests?scope=missions').set(auth(plumber.token));
+      const missions = await request(app).get('/api/requests?scope=missions').set(auth(winnerProfile.token));
       expect(missions.body.data.map((r: any) => r._id)).toEqual([requestId]);
-      const noMission = await request(app).get('/api/requests?scope=missions').set(auth(plumber2.token));
+      const noMission = await request(app).get('/api/requests?scope=missions').set(auth(loserProfile.token));
       expect(noMission.body.data).toHaveLength(0);
 
-      const stats = await request(app).get('/api/artisans/me/stats').set(auth(plumber.token));
+      const stats = await request(app).get('/api/artisans/me/stats').set(auth(winnerProfile.token));
       expect(stats.body.data.activeMissions).toBe(1);
 
-      const declined = await request(app).post(`/api/quotes/${quote2Id}/reject`).set(auth(client.token));
+      const declined = await request(app).post(`/api/quotes/${loserQuoteId}/reject`).set(auth(client.token));
       expect(declined.status).toBe(409);
     });
 
@@ -211,14 +222,16 @@ describe('Client / artisan workflow', () => {
     });
 
     it('the assigned artisan can mark the job completed, which credits their counter', async () => {
-      const other = await request(app).put(`/api/requests/${requestId}`).set(auth(plumber2.token)).send({ status: 'completed' });
+      if (!acceptedArtisan || !losingArtisan) throw new Error('Accepted artisan was not initialized');
+
+      const other = await request(app).put(`/api/requests/${requestId}`).set(auth(losingArtisan.token)).send({ status: 'completed' });
       expect(other.status).toBe(403);
 
-      const res = await request(app).put(`/api/requests/${requestId}`).set(auth(plumber.token)).send({ status: 'completed' });
+      const res = await request(app).put(`/api/requests/${requestId}`).set(auth(acceptedArtisan.token)).send({ status: 'completed' });
       expect(res.status).toBe(200);
       expect(res.body.data.status).toBe('completed');
 
-      const profile = await request(app).get(`/api/artisans/${plumber.profileId}`);
+      const profile = await request(app).get(`/api/artisans/${acceptedArtisan.profileId}`);
       expect(profile.body.data.completedJobs).toBe(1);
 
       const notifs = await request(app).get('/api/notifications').set(auth(client.token));
@@ -226,13 +239,15 @@ describe('Client / artisan workflow', () => {
     });
 
     it('a review always targets the assigned artisan', async () => {
+      if (!acceptedArtisan || !losingArtisan) throw new Error('Accepted artisan was not initialized');
+
       const wrong = await request(app).post('/api/reviews').set(auth(client.token))
-        .send({ requestId, artisanId: plumber2.profileId, rating: 1 });
+        .send({ requestId, artisanId: losingArtisan.profileId, rating: 1 });
       expect(wrong.status).toBe(403);
 
       const res = await request(app).post('/api/reviews').set(auth(client.token)).send({ requestId, rating: 4 });
       expect(res.status).toBe(201);
-      expect(res.body.data.artisanId).toBe(plumber.profileId);
+      expect(res.body.data.artisanId).toBe(acceptedArtisan.profileId);
 
       const detail = await request(app).get(`/api/requests/${requestId}`).set(auth(client.token));
       expect(detail.body.data.review.rating).toBe(4);

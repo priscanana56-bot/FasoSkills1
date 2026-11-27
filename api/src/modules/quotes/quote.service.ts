@@ -108,6 +108,9 @@ export class QuoteService {
   public async accept(quoteId: string, userId: string) {
     const quote = await Quote.findById(quoteId).populate('artisanId');
     if (!quote) throw new NotFoundError('Quote');
+    if (quote.status !== 'pending') {
+      throw new ConflictError('Only a pending quote can be accepted');
+    }
 
     const request = await ServiceRequest.findById(quote.requestId);
     if (!request) throw new NotFoundError('Service request');
@@ -122,15 +125,52 @@ export class QuoteService {
       throw new ConflictError('A quote has already been accepted or the request is no longer pending');
     }
 
-    // Accept this quote, reject other quotes for this request
-    quote.status = 'accepted';
-    await quote.save();
+    // Atomically claim the request before changing any quote.
+    // This compare-and-set prevents two concurrent accept requests from winning.
+    const claimedRequest = await ServiceRequest.findOneAndUpdate(
+      {
+        _id: request._id,
+        status: 'pending',
+        acceptedQuoteId: { $exists: false },
+      },
+      {
+        $set: {
+          status: 'in_progress',
+          acceptedQuoteId: quote._id,
+        },
+      },
+      { new: true }
+    );
+    if (!claimedRequest) {
+      throw new ConflictError('A quote has already been accepted or the request is no longer pending');
+    }
 
-    const others = await Quote.find({ requestId: request._id, _id: { $ne: quote._id }, status: 'pending' })
+    // Atomically mark this quote accepted as part of the request claim.
+    // If it fails, roll the request back so another valid quote can still be accepted.
+    const acceptedQuote = await Quote.findOneAndUpdate(
+      { _id: quote._id, requestId: request._id, status: 'pending' },
+      { $set: { status: 'accepted' } },
+      { new: true }
+    ).populate({
+      path: 'artisanId',
+      populate: [
+        { path: 'userId', select: 'fullName email phone profilePicture isVerified' },
+        { path: 'category', select: 'name' },
+      ],
+    });
+    if (!acceptedQuote) {
+      await ServiceRequest.updateOne(
+        { _id: request._id, acceptedQuoteId: quote._id },
+        { $set: { status: 'pending' }, $unset: { acceptedQuoteId: 1 } }
+      );
+      throw new ConflictError('This quote is no longer available');
+    }
+
+    const others = await Quote.find({ requestId: request._id, _id: { $ne: acceptedQuote._id }, status: 'pending' })
       .populate('artisanId', 'userId')
       .lean();
     await Quote.updateMany(
-      { requestId: request._id, _id: { $ne: quote._id } },
+      { requestId: request._id, _id: { $ne: acceptedQuote._id } },
       { status: 'rejected' }
     );
     await notificationService.notifyMany(
@@ -143,30 +183,26 @@ export class QuoteService {
       }
     );
 
-    request.status = 'in_progress';
-    request.acceptedQuoteId = quote._id as any;
-    await request.save();
-
-    const artisan: any = quote.artisanId;
+    const artisan: any = acceptedQuote.artisanId;
     if (artisan && artisan.userId) {
       // WebSocket notification to the artisan that quote was accepted!
       wsManager.broadcastToUser(artisan.userId.toString(), 'quote:accepted', {
         requestId: request._id,
-        quoteId: quote._id,
+        quoteId: acceptedQuote._id,
       });
       await notificationService.notify(artisan.userId, {
         type: 'quote:accepted',
         title: 'Devis accepté 🎉',
         body: `Votre devis pour « ${request.title} » a été accepté. La mission commence !`,
-        data: { requestId: request._id.toString(), quoteId: quote._id.toString() },
+        data: { requestId: request._id.toString(), quoteId: acceptedQuote._id.toString() },
       });
     }
     wsManager.broadcastToRoom(`request:${request._id}`, 'request:in_progress', {
       requestId: request._id,
-      acceptedQuoteId: quote._id,
+      acceptedQuoteId: acceptedQuote._id,
     });
 
-    return quote;
+    return acceptedQuote;
   }
 
   /** Client declines one quote; the request stays open for others. */

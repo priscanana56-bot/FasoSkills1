@@ -13,9 +13,9 @@ async function bootstrap() {
   // Initialize WebSocket server attached to HTTP server
   wsManager.init(server);
 
-  server.listen(env.PORT, () => {
-    console.log(`🚀 FasoSkills API running on http://localhost:${env.PORT}`);
-    console.log(` WebSocket available on ws://localhost:${env.PORT}/ws`);
+  server.listen(env.PORT, '0.0.0.0', () => {
+    console.log(`🚀 FasoSkills API running on http://0.0.0.0:${env.PORT}`);
+    console.log(` WebSocket available on ws://0.0.0.0:${env.PORT}/ws`);
   });
 }
 

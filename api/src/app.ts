@@ -2,6 +2,7 @@ import express, { type Application } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import { env } from './config/env.js';
 
 import authRoutes from './modules/auth/auth.routes.js';
 import categoryRoutes from './modules/categories/category.routes.js';
@@ -25,7 +26,7 @@ export function createApp(): Application {
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
   app.use(cors({
-    origin: '*',
+    origin: env.CORS_ORIGIN === '*' ? '*' : env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));
