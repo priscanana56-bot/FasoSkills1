@@ -1,0 +1,172 @@
+@baseUrl = http://localhost:8000/api
+@adminToken = replace_with_admin_access_token
+@clientToken = replace_with_client_access_token
+@artisanToken = replace_with_artisan_access_token
+@categoryId = replace_with_category_id
+@artisanId = replace_with_artisan_profile_id
+@requestId = replace_with_request_id
+@quoteId = replace_with_quote_id
+@reportId = replace_with_report_id
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Auth — Register Client
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "client.demo@fasoskills.bf",
+  "phone": "+22670998877",
+  "fullName": "Salifou Kaboré",
+  "password": "Password123!",
+  "role": "client"
+}
+
+### Auth — Login Admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@fasoskills.bf",
+  "password": "Password123!"
+}
+
+### Auth — Refresh Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "replace_with_refresh_token"
+}
+
+### Auth — Me
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{adminToken}}
+
+### Categories — Public List (active only)
+GET {{baseUrl}}/categories
+
+### Categories — Admin Create
+POST {{baseUrl}}/categories
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Froid & Climatisation",
+  "icon": "ac_unit",
+  "description": "Entretien et installation de climatiseurs"
+}
+
+### Categories — Admin Update / Toggle Active
+PATCH {{baseUrl}}/categories/{{categoryId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": false,
+  "description": "Description mise à jour"
+}
+
+### Categories — Admin Delete (204 or 409 if used)
+DELETE {{baseUrl}}/categories/{{categoryId}}
+Authorization: Bearer {{adminToken}}
+
+### Artisans — Public Search
+GET {{baseUrl}}/artisans?city=Ouagadougou&page=1&limit=10
+
+### Artisans — Admin Verify (200 or 409 if already verified)
+POST {{baseUrl}}/artisans/{{artisanId}}/verify
+Authorization: Bearer {{adminToken}}
+
+### Admin — Dashboard Stats (MongoDB Aggregation)
+GET {{baseUrl}}/admin/stats
+Authorization: Bearer {{adminToken}}
+
+### Admin — List Artisans (pending | verified | all)
+GET {{baseUrl}}/admin/artisans?status=pending&q=&page=1&limit=10
+Authorization: Bearer {{adminToken}}
+
+### Admin — Artisan Detail (with verification documents)
+GET {{baseUrl}}/admin/artisans/{{artisanId}}
+Authorization: Bearer {{adminToken}}
+
+### Admin — Reject Artisan Verification
+POST {{baseUrl}}/admin/artisans/{{artisanId}}/reject
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Pièce d'identité illisible, merci de soumettre un scan net."
+}
+
+### Admin — List All Categories (including inactive)
+GET {{baseUrl}}/admin/categories
+Authorization: Bearer {{adminToken}}
+
+### Reports — Submit Content Report (client or artisan)
+POST {{baseUrl}}/reports
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{
+  "targetType": "request",
+  "targetId": "{{requestId}}",
+  "reason": "Contenu inapproprié",
+  "description": "Annonce suspecte"
+}
+
+### Admin — List Reports
+GET {{baseUrl}}/admin/reports?type=request&status=pending&page=1&limit=10
+Authorization: Bearer {{adminToken}}
+
+### Admin — Dismiss Report
+PATCH {{baseUrl}}/admin/reports/{{reportId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "resolutionNote": "Contenu vérifié, aucune infraction constatée."
+}
+
+### Admin — Delete Reported Content (request | review | message) with Logged Reason
+DELETE {{baseUrl}}/admin/content/request/{{requestId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Annonce non conforme aux conditions d'utilisation"
+}
+
+### Admin — Moderation Audit Logs
+GET {{baseUrl}}/admin/moderation-logs?page=1&limit=20
+Authorization: Bearer {{adminToken}}
+
+### Requests — Create Service Request
+POST {{baseUrl}}/requests
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{
+  "title": "Réparation disjoncteur principal",
+  "description": "Le disjoncteur saute dès qu'on allume le climatiseur.",
+  "categoryId": "{{categoryId}}",
+  "city": "Ouagadougou",
+  "address": "Ouaga 2000"
+}
+
+### Quotes — Submit Quote
+POST {{baseUrl}}/quotes
+Authorization: Bearer {{artisanToken}}
+Content-Type: application/json
+
+{
+  "requestId": "{{requestId}}",
+  "amount": 20000,
+  "estimatedDays": 1,
+  "message": "Intervention possible dès demain matin."
+}
+
+### Quotes — Accept Quote
+POST {{baseUrl}}/quotes/{{quoteId}}/accept
+Authorization: Bearer {{clientToken}}

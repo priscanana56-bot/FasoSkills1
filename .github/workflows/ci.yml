@@ -1,0 +1,76 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  api:
+    name: API (Node.js + TypeScript + Vitest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        working-directory: api
+        run: npm ci
+
+      - name: Type-check API (Requirement A1)
+        working-directory: api
+        run: npm run typecheck
+
+      - name: Run API Integration Tests (Requirement A12)
+        working-directory: api
+        run: npm test
+
+      - name: Build API (Requirement A1)
+        working-directory: api
+        run: npm run build
+
+  app:
+    name: App (Flutter + BLoC + Analyze + Test)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Verify Code Formatting
+        working-directory: app
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run Flutter Analyzer (Requirement F12)
+        working-directory: app
+        run: flutter analyze
+
+      - name: Run Flutter Unit & BLoC Tests (Requirement F11)
+        working-directory: app
+        run: flutter test

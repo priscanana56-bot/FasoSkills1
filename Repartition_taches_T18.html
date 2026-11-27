@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Répartition des Tâches — Projet FasoSkills (T18)</title>
+<style>
+@page { size: A4; margin: 1.8cm; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:#0f172a; font-size: 10pt; line-height:1.5; background:#fff; }
+.header-box { border-bottom: 2px solid #2563eb; padding-bottom: 10pt; margin-bottom: 14pt; }
+h1 { color:#1e3a8a; font-size:20pt; margin:0 0 4pt; font-weight:800; }
+.sub { color:#64748b; font-size:11pt; font-weight:500; }
+.badge { display:inline-block; padding:3px 8px; border-radius:12px; font-size:8.5pt; font-weight:bold; }
+.badge-cedric { background:#dbeafe; color:#1d4ed8; }
+.badge-aman { background:#fef3c7; color:#b45309; }
+.badge-prisca { background:#dcfce7; color:#15803d; }
+.badge-grace { background:#f3e8ff; color:#7e22ce; }
+.callout { background:#f0f7ff; padding:12pt; border-left:5px solid #2563eb; border-radius: 0 8px 8px 0; margin: 12pt 0; font-size: 9.5pt; }
+.warning-box { background:#fef2f2; padding:10pt; border-left:5px solid #ef4444; border-radius: 0 8px 8px 0; margin: 10pt 0; font-size: 9pt; color: #991b1b; }
+h2 { color:#1e3a8a; font-size:13pt; border-bottom:1px solid #e2e8f0; padding-bottom:4pt; margin-top:16pt; margin-bottom:8pt; }
+table { border-collapse:collapse; width:100%; margin:8pt 0 12pt; font-size: 9pt; }
+th { background:#f1f5f9; color:#1e293b; text-align:left; font-weight: 700; }
+th, td { border:1px solid #cbd5e1; padding:6pt 8pt; vertical-align:top; }
+ul { margin:4pt 0 6pt 14pt; padding:0; }
+li { margin-bottom:3pt; }
+.small { font-size:8pt; color:#64748b; }
+</style>
+</head>
+<body>
+
+<div class="header-box">
+  <h1>Plan Officiel de Répartition des Tâches & Livrables</h1>
+  <div class="sub">Projet T18 — HomeService : FasoSkills (Marketplace d’Artisans Locaux)</div>
+  <div class="small" style="margin-top: 4pt;">Advanced Mobile Development · Year 3 · Dr Lebian Wilfried NIKIEMA · Équipe de 4 étudiants</div>
+</div>
+
+<div class="callout">
+  <b>Base Officielle de Répartition de l'Équipe :</b>
+  <ul>
+    <li><b>CÉDRIC :</b> <b>Frontend Client &amp; Frontend Agent (Artisan)</b> (Application Mobile Flutter).</li>
+    <li><b>AMAN :</b> <b>Frontend Administrateur &amp; Backend UNIQUEMENT Administrateur</b> (Dashboard Admin &amp; API Modération / Validation).</li>
+    <li><b>PRISCA :</b> <b>Backend Client &amp; Backend Agent (Artisan)</b> + <b>Communication avec le Backend Administrateur</b> (Demandes, devis, avis, recherche, WebSockets &amp; passerelle inter-modules).</li>
+    <li><b>GRACE :</b> <b>Documentation Complète &amp; Livrables Académiques</b> (Design Document M1, Rapport d'Ingénierie M4, Slides et Supports de Soutenance).</li>
+  </ul>
+</div>
+
+<div class="warning-box">
+  <b>⚠️ Rappel des Exigences de Dr Lebian Wilfried NIKIEMA (Project Book p. 3 &amp; 16) :</b><br/>
+  • Chaque membre doit être en mesure d'expliquer l'architecture globale lors de la soutenance de 25 minutes.<br/>
+  • Chaque membre rédige son paragraphe individuel obligatoire dans le rapport final (Milestone 4, <code>docs/report.pdf</code>).<br/>
+  • La note finale est modulée par un facteur individuel calculé d'après les réponses aux questions techniques du jury et les contributions Git.
+</div>
+
+<h2>1. Répartition Détaillée des Responsabilités et Livrables</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 20%;">Membre &amp; Périmètre</th>
+      <th style="width: 40%;">Tâches Spécifiques &amp; Livrables Concrets</th>
+      <th style="width: 40%;">Règles Métier &amp; Défense devant le Jury</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <b>CÉDRIC</b><br/>
+        <span class="badge badge-cedric">Frontend Client &amp; Agent</span><br/>
+        <span class="small">App Lead (Flutter Mobile)</span>
+      </td>
+      <td>
+        <b>Conception &amp; Intégration Mobile Complète :</b>
+        <ul>
+          <li><b>Espace Client :</b> Accueil avec carrousel 3 cartes auto-scrollant, section « Artisans disponibles », écran de recherche et filtres par corps de métier, profil détaillé d'un artisan, formulaire « Nouvelle demande » (créneaux, date, budget, photos), onglet « Discussions » avec chat direct, écran dédié aux notifications.</li>
+          <li><b>Espace Agent (Artisan) :</b> Consultation des opportunités de chantiers, soumission d'un devis chiffré, gestion du statut d'intervention et profil.</li>
+          <li><b>Gestion d'état BLoC :</b> `RequestBloc` (avec mise à jour optimiste et rollback), `ArtisanListBloc` (avec debounce 300ms sur la recherche), gestion des 4 états UI (loading, empty, error avec retry, loaded).</li>
+          <li><b>Tests &amp; Build :</b> Tests BLoC Flutter (`test/bloc_test.dart`), build Release APK (`app-release.apk`) testé sur smartphone réel.</li>
+        </ul>
+      </td>
+      <td>
+        <b>Sujets de Soutenance :</b>
+        <ul>
+          <li>Architecture en couches Clean Architecture (Domain, Data, Presentation) sous Flutter.</li>
+          <li>Fonctionnement des BLoCs, des événements, des états et des transformers.</li>
+          <li>Navigation déclarative avec `go_router` et protection des routes par Route Guards.</li>
+          <li>Ergonomie mobile et résilience réseau (*Cache-then-network*).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>AMAN</b><br/>
+        <span class="badge badge-aman">Admin Front &amp; Back</span><br/>
+        <span class="small">Administration Lead</span>
+      </td>
+      <td>
+        <b>Frontend &amp; Backend de l'Administration :</b>
+        <ul>
+          <li><b>Frontend Administrateur :</b> Dashboard web/mobile pour la supervision globale du système FasoSkills.</li>
+          <li><b>Backend Administrateur :</b> Endpoints dédiés à l'administration (`/api/admin/users`, `/api/admin/categories`, `/api/admin/artisans/:id/verify`).</li>
+          <li><b>Gestion des Badges :</b> Workflow de validation et certification officielle des artisans (« Artisan Vérifié FasoSkills »).</li>
+          <li><b>Modération du Système :</b> Activation, désactivation ou bannissement de comptes frauduleux, gestion du catalogue des corps de métier.</li>
+          <li><b>Sécurité d'Accès Admin :</b> Protection RBAC stricte garantissant que seules les requêtes munies du rôle `admin` accèdent à ces routes.</li>
+        </ul>
+      </td>
+      <td>
+        <b>Sujets de Soutenance :</b>
+        <ul>
+          <li>Sécurisation du rôle Administrateur et isolation des privilèges (RBAC).</li>
+          <li>Workflow d'audit et de modération des pièces justificatives d'artisan.</li>
+          <li>Intégrité de la base de données lors de la modification des catégories de services.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>PRISCA</b><br/>
+        <span class="badge badge-prisca">Backend Client/Agent</span><br/>
+        <span class="small">API Lead &amp; Intégration Métier</span>
+      </td>
+      <td>
+        <b>Backend Métier Client/Agent &amp; Communication Admin :</b>
+        <ul>
+          <li><b>API Demandes (`jobRequests`) :</b> Création, consultation, filtrage géographique par quartier et transition des statuts.</li>
+          <li><b>API Devis (`quotes`) :</b> Soumission de propositions chiffrées par les artisans, consultation restreinte et acceptation exclusive.</li>
+          <li><b>API Avis &amp; Notations (`reviews`) :</b> Dépôt d'avis vérifiés et recalcul automatique de la note moyenne de l'artisan.</li>
+          <li><b>Communication avec le Backend Admin :</b> Synchronisation des artisans validés par Aman avec l'index de recherche des clients, remontée des métriques au dashboard admin.</li>
+          <li><b>Règles de Sécurité T18 :</b> Contrôle BOLA (seul le demandeur voit ses devis), verrouillage atomique (1 seul devis accepté), avis autorisés uniquement sur chantiers terminés (`completed`).</li>
+          <li><b>WebSockets &amp; Tests :</b> Serveur WebSocket (`ws-server.ts`), notifications temps réel et tests d'intégration API (`supertest`).</li>
+        </ul>
+      </td>
+      <td>
+        <b>Sujets de Soutenance :</b>
+        <ul>
+          <li>Défenses contre les failles BOLA (Broken Object Level Authorization) et injection.</li>
+          <li>Gestion de l'atomicité MongoDB lors de l'acceptation concurrente de devis.</li>
+          <li>Protocole WebSocket bidirectionnel pour le temps réel.</li>
+          <li>Architecture en couches de l'API (Routes ➔ Controllers ➔ Services ➔ Models).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>GRACE</b><br/>
+        <span class="badge badge-grace">Documentation &amp; Release</span><br/>
+        <span class="small">Product &amp; Documentation Lead</span>
+      </td>
+      <td>
+        <b>Documentation Complète &amp; Livrables Académiques :</b>
+        <ul>
+          <li><b>Design Document M1 (`docs/design.pdf`) :</b> Rédaction du document de 6 à 10 pages (User Stories MoSCoW, schéma MongoDB embed vs ref, table des endpoints, diagrammes d'architecture, matrice des risques).</li>
+          <li><b>Rapport Final d'Ingénierie M4 (`docs/report.pdf`) :</b> Rapport de 10 à 15 pages complet (architecture, tableau comparatif OWASP, explication détaillée de 2 BLoCs, stratégie de tests, paragraphe individuel de chaque membre).</li>
+          <li><b>Support de Présentation (`docs/slides.pdf`) :</b> Conception des diapositives officielles pour la soutenance orale de 25 minutes.</li>
+          <li><b>Données de Démonstration (`seed.ts`) :</b> Élaboration du jeu de données burkinabè réaliste pour le peuplement de la base.</li>
+          <li><b>Vidéo Démo &amp; Audit Git :</b> Coordination de la vidéo démo de 3 minutes et vérification de l'absence de secrets commis (`git log -p`).</li>
+        </ul>
+      </td>
+      <td>
+        <b>Sujets de Soutenance :</b>
+        <ul>
+          <li>Présentation du contexte local et de la problématique T18 au Burkina Faso.</li>
+          <li>Justification des choix de conception et des décisions d'ingénierie.</li>
+          <li>Analyse rétrospective : les 3 décisions techniques qu'on prendrait différemment.</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. Matrice d'Alignement sur le Barème de Dr NIKIEMA (100 Points)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Module Évalué</th>
+      <th>Barème</th>
+      <th>Livrable Technique Associé</th>
+      <th>Responsables Directs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Sécurité API</b></td>
+      <td>15 pts</td>
+      <td>Hachage bcrypt, rotation JWT, contrôle BOLA strict, RBAC admin/client/artisan, rate limiting.</td>
+      <td><b>Prisca &amp; Aman</b></td>
+    </tr>
+    <tr>
+      <td><b>Architecture App Flutter</b></td>
+      <td>15 pts</td>
+      <td>Clean Architecture Feature-First, injection `get_it`, contrats de repositories, route guards.</td>
+      <td><b>Cédric</b></td>
+    </tr>
+    <tr>
+      <td><b>Gestion d'état BLoC</b></td>
+      <td>10 pts</td>
+      <td>`RequestBloc` (optimistic update &amp; rollback), `ArtisanListBloc` (debounce 300ms), 4 états UI.</td>
+      <td><b>Cédric</b></td>
+    </tr>
+    <tr>
+      <td><b>Tests &amp; Pipeline CI/CD</b></td>
+      <td>10 pts</td>
+      <td>Tests d'intégration API (`supertest`), tests de BLoC (`bloc_test`), workflow GitHub Actions vert.</td>
+      <td><b>Prisca &amp; Cédric</b></td>
+    </tr>
+    <tr>
+      <td><b>Produit &amp; UX</b></td>
+      <td>10 pts</td>
+      <td>Complétude des parcours T18, design soigné, prise en charge du mode hors-ligne (*Cache-then-network*).</td>
+      <td><b>Cédric &amp; Grace</b></td>
+    </tr>
+    <tr>
+      <td><b>Fonctionnalité Avancée</b></td>
+      <td>5 pts</td>
+      <td>WebSockets bidirectionnels temps réel (alertes devis et chat direct).</td>
+      <td><b>Prisca &amp; Cédric</b></td>
+    </tr>
+    <tr>
+      <td><b>Documentation &amp; Rapport</b></td>
+      <td>10 pts</td>
+      <td>Design Doc M1, README (&lt; 10 min), Rapport final M4 avec paragraphes individuels.</td>
+      <td><b>Grace</b></td>
+    </tr>
+    <tr>
+      <td><b>Soutenance Orale (25 min)</b></td>
+      <td>10 pts</td>
+      <td>3 min setup + 7 min slides (tous parlent) + 7 min démo live multi-rôles + 8 min questions jury.</td>
+      <td><b>Toute l'équipe</b></td>
+    </tr>
+    <tr>
+      <td><b>Bonus (+5 max)</b></td>
+      <td>+5 pts</td>
+      <td>Déploiement Web, qualité UX exceptionnelle et tests de bout en bout supplémentaires.</td>
+      <td><b>Toute l'équipe</b></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. Déroulement Chronométré de la Soutenance (25 Minutes)</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%;">Temps</th>
+      <th style="width: 25%;">Étape</th>
+      <th style="width: 30%;">Intervenants</th>
+      <th style="width: 30%;">Contenu Présenté</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>00:00 – 03:00</td>
+      <td>Installation &amp; Setup</td>
+      <td>Cédric &amp; Prisca</td>
+      <td>Connexion du smartphone physique au projecteur, vérification de l'API déployée et des données de seed.</td>
+    </tr>
+    <tr>
+      <td>03:00 – 10:00 (7 min)</td>
+      <td>Présentation Slides</td>
+      <td><b>Les 4 membres</b><br/>(~1 min 45 s chacun)</td>
+      <td>
+        • <b>Grace :</b> Problématique locale T18 au Burkina Faso, personas et objectifs du produit.<br/>
+        • <b>Aman :</b> Architecture du module Administrateur, modération et sécurité RBAC.<br/>
+        • <b>Prisca :</b> Architecture API Client/Agent, modèle MongoDB, sécurité OWASP &amp; BOLA.<br/>
+        • <b>Cédric :</b> Clean Architecture Flutter, BLoC, UX des parcours Client &amp; Artisan.
+      </td>
+    </tr>
+    <tr>
+      <td>10:00 – 17:00 (7 min)</td>
+      <td>Démo Live Multi-Rôles</td>
+      <td>Cédric (Client) &amp; Prisca (Artisan) &amp; Aman (Admin)</td>
+      <td>
+        1. Cédric publie une « Nouvelle demande » de plomberie sur son iPhone.<br/>
+        2. Prisca (Artisan) reçoit la demande via WebSocket et envoie un devis chiffré.<br/>
+        3. Cédric reçoit l'alerte en direct et accepte le devis.<br/>
+        4. Aman montre le tableau de bord Admin pour valider le badge de l'artisan.
+      </td>
+    </tr>
+    <tr>
+      <td>17:00 – 25:00 (8 min)</td>
+      <td>Questions du Jury</td>
+      <td>Réponses individuelles</td>
+      <td>Questions techniques de Dr NIKIEMA posées individuellement à chaque étudiant sur son code.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="small" style="text-align:center; margin-top:20pt;">FasoSkills T18 — Document officiel de cadrage — Advanced Mobile Development — Dr Lebian Wilfried NIKIEMA</p>
+
+</body>
+</html>
